@@ -1,87 +1,86 @@
 import Form from './Form/Form';
-import { useState, useEffect } from 'react';
+import { Component } from 'react';
 import ListContacts from './ListContacts/ListContacts';
 import Section from './Section/Section';
 import Filter from './Filter/Filter';
 import { nanoid } from 'nanoid';
+class App extends Component {
+  state = {
+    contacts: [],
+    filter: '',
+  };
 
-const App = () => {
-  const [contacts, setContacts] = useState([]);
-  const [filter, setFilter] = useState('');
-
-  const handleChange = (value, number) => {
+  handleChange = (value, number) => {
     const obj = {
       name: value,
       id: nanoid(),
       number: number,
     };
-    const dublicate = filterByName(value);
+    const dublicate = this.filterByName(value);
     if (dublicate.length > 0) {
       alert(`${value} is already in contacts`);
     } else {
-      setContacts(prevState => [...prevState, obj]);
+      this.setState(prevState => ({
+        contacts: [...prevState.contacts, obj],
+      }));
     }
   };
 
-  const handleFiter = ({ target: { value } }) => {
-    setFilter(value);
+  handleFiter = ({ target: { value } }) => {
+    this.setState(() => ({
+      filter: value,
+    }));
   };
 
-  const filterByName = value => {
-    return contacts.filter(
+  filterByName = value => {
+    return this.state.contacts.filter(
       item => item.name.toLowerCase().indexOf(value.toLowerCase()) > -1
     );
   };
 
-  const hendleDelete = id => {
-    setContacts(prev => prev.filter(el => el.id !== id));
+  hendleDelete = id => {
+    this.setState(prev => ({
+      contacts: prev.contacts.filter(el => el.id !== id),
+    }));
   };
 
-  useEffect(() => {
-    if (contacts.length) {
-      localStorage.setItem('contacts', JSON.stringify(contacts));
+  componentDidUpdate(prevProps, prevState) {
+    if (prevState.contacts.length !== this.state.contacts.length) {
+      localStorage.setItem('contacts', JSON.stringify(this.state.contacts));
     }
-  }, [contacts]);
-
-  useEffect(() => {
+  }
+  componentDidMount() {
     const localdata = localStorage.getItem('contacts');
     if (localdata) {
-      setContacts(JSON.parse(localdata));
+      this.setState({ contacts: JSON.parse(localdata) });
     }
-  }, []);
+  }
 
-  // const componentDidUpdate(prevProps, prevState) {
-  //   if (prevState.contacts.length !== this.state.contacts.length) {
-  //     localStorage.setItem('contacts', JSON.stringify(this.state.contacts));
-  //   }
-  // }
-  // componentDidMount() {
-  //   const localdata = localStorage.getItem('contacts');
-  //   if (localdata) {
-  //     this.setState({ contacts: JSON.parse(localdata) });
-  //   }
-  // }
-
-  const filterContact = filterByName(filter);
-  return (
-    <div
-      style={{
-        height: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        color: '#010101',
-        width: 400,
-        margin: 'auto',
-      }}
-    >
-      <Section title="Phonebook">
-        <Form handleChange={handleChange} />
-      </Section>
-      <Section title="Contacts">
-        <Filter handleFiter={handleFiter} />
-        <ListContacts contacts={filterContact} hendleDelete={hendleDelete} />
-      </Section>
-    </div>
-  );
-};
+  render() {
+    const filterContact = this.filterByName(this.state.filter);
+    return (
+      <div
+        style={{
+          height: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          color: '#010101',
+          width: 400,
+          margin: 'auto',
+        }}
+      >
+        <Section title="Phonebook">
+          <Form handleChange={this.handleChange} />
+        </Section>
+        <Section title="Contacts">
+          <Filter handleFiter={this.handleFiter} />
+          <ListContacts
+            contacts={filterContact}
+            hendleDelete={this.hendleDelete}
+          />
+        </Section>
+      </div>
+    );
+  }
+}
 export default App;
